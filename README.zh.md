@@ -136,7 +136,19 @@ UCI 配置存储在 `/etc/config/openchimera`。架构包括：
 - `tun_enabled`、`tun_device`、`tun_route_table` - 基础 TUN 设置
 - `log_path` - 日志文件路径
 
-完整文档将在项目 wiki 中发布。
+## 文档
+
+| 文档 | 说明 |
+|------|------|
+| **[docs/sdk-build.md](docs/sdk-build.md)** | 完整的 SDK 构建指南，包含环境要求、故障排除和构建说明 |
+| **[docs/arch-matrix.md](docs/arch-matrix.md)** | 架构支持矩阵（x86_64、aarch64）和产物版本锁定策略 |
+| **[docs/qa-checklist.md](docs/qa-checklist.md)** | QA 环境检查清单和验证流程 |
+| **[docs/integration-verification.md](docs/integration-verification.md)** | chimera-core 与 openchimera 集成验证报告 |
+| **[docs/migration-guide.md](docs/migration-guide.md)** | 从 Nikki / mihomo-meta 迁移到 OpenChimera 的指南 |
+| **[docs/aarch64-enablement.md](docs/aarch64-enablement.md)** | 启用 aarch64 支持的规划和前提条件 |
+| **[docs/luci-app-design.md](docs/luci-app-design.md)** | LuCI 网页界面设计文档（已规划，尚未实现） |
+| **[docs/cicd-release-feed.md](docs/cicd-release-feed.md)** | CI/CD 发布源设计文档（已规划，尚未实现） |
+| **[docs/tproxy-redirect-plan.md](docs/tproxy-redirect-plan.md)** | TProxy / Redirect 透明代理扩展计划（已规划，尚未实现） |
 
 ## 兼容性
 

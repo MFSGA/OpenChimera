@@ -132,7 +132,19 @@ UCI config is stored at `/etc/config/openchimera`. The schema covers:
 - `tun_enabled`, `tun_device`, `tun_route_table` - Basic TUN settings
 - `log_path` - Log file location
 
-Full documentation is available in the project wiki (once published).
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| **[docs/sdk-build.md](docs/sdk-build.md)** | Full SDK build instructions with prerequisites, troubleshooting, and build notes |
+| **[docs/arch-matrix.md](docs/arch-matrix.md)** | Architecture support matrix (x86_64, aarch64) and artifact pinning policy |
+| **[docs/qa-checklist.md](docs/qa-checklist.md)** | QA environment checklist and verification procedures |
+| **[docs/integration-verification.md](docs/integration-verification.md)** | chimera-core + openchimera integration verification report |
+| **[docs/migration-guide.md](docs/migration-guide.md)** | Migration guide for users coming from Nikki / mihomo-meta to OpenChimera |
+| **[docs/aarch64-enablement.md](docs/aarch64-enablement.md)** | Plan and prerequisites for enabling aarch64 support |
+| **[docs/luci-app-design.md](docs/luci-app-design.md)** | LuCI web interface design document (deferred, not yet implemented) |
+| **[docs/cicd-release-feed.md](docs/cicd-release-feed.md)** | CI/CD release feed design (deferred, not yet implemented) |
+| **[docs/tproxy-redirect-plan.md](docs/tproxy-redirect-plan.md)** | TProxy / Redirect transparent proxy expansion plan (deferred, not yet implemented) |
 
 ## Compatibility
 
