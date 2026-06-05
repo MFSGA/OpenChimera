@@ -1,0 +1,15 @@
+=== UCI Exclusions Verification ===
+File: openchimera/files/openchimera.conf
+Date: 2026-06-06
+
+Scenario: UCI schema excludes deferred/invalid fields
+Expected Result: Deferred/Chimera-invalid fields absent from milestone 1 defaults.
+
+Results:
+PASS: auto-redirect absent
+PASS: auto-detect-interface absent
+PASS: disable-icmp-forwarding absent
+PASS: subscription absent
+PASS: cron absent
+
+Verdict: ALL EXCLUDED FIELDS ABSENT
