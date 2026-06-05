@@ -20,6 +20,12 @@ define Package/chimera-core
   CATEGORY:=Network
   TITLE:=Chimera Client core (clash-rs) prebuilt binary
   URL:=https://github.com/MFSGA/Chimera_Client
+  # Runtime dependencies for the Chimera_Client (clash-rs) binary:
+  # - ca-bundle: SSL/TLS certificate bundle for HTTPS connections
+  # - ip-full: Full iproute2 for policy routing in TUN mode
+  # - kmod-tun: TUN/TAP kernel module for TUN proxy mode
+  # Note: kmod-inet-diag is NOT needed (diagnostic-only, not required by Chimera)
+  #       kmod-nft-tproxy/kmod-nft-socket deferred to post-milestone-1 (TProxy/Redirect)
   DEPENDS:=+ca-bundle +ip-full +kmod-tun
   PROVIDES:=mihomo
   CONFLICTS:=mihomo-meta mihomo-alpha

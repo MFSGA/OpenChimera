@@ -1,0 +1,34 @@
+# OpenChimera default configuration
+# Chimera (clash-rs) — minimal working config for first-run / fallback
+#
+# This file is installed as /etc/openchimera/config.yaml.default and is
+# used when no user-provided config.yaml exists yet.  It is intentionally
+# minimal: mixed-port, API controller, and log level.
+#
+# To use it as your runtime config:
+#   cp /etc/openchimera/config.yaml.default /etc/openchimera/run/config.yaml
+#
+# Add your proxy servers, rules, and other sections as needed.
+# See the Chimera documentation for supported fields.
+# ---------------------------------------------------------------------------
+
+mixed-port: 7890
+
+external-controller: 0.0.0.0:9090
+
+log-level: info
+
+# ---------------------------------------------------------------------------
+# TUN — disabled by default.  Set tun_enabled=1 in UCI to enable:
+#   uci set openchimera.mixin.tun_enabled=1
+#   uci commit openchimera
+# The config generator will then add a tun: block automatically.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# Unsupported fields — do NOT add any of the following:
+#   auto-redirect       (Nikki/Mihomo-only)
+#   auto-detect-interface (Nikki/Mihomo-only)
+#   disable-icmp-forwarding (Nikki/Mihomo-only)
+# These fields cause validation errors on Chimera (clash-rs).
+# ---------------------------------------------------------------------------

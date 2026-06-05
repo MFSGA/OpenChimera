@@ -49,11 +49,13 @@ start_service() {
 		return 1
 	}
 
-	# Verify config file exists
-	[ -f "$WORK_DIR/$CONFIG_FILE" ] || {
-		logger -t openchimera "Config file not found: $WORK_DIR/$CONFIG_FILE"
+	# Generate config.yaml from UCI settings
+	logger -t openchimera "Generating config from UCI..."
+	if ! /usr/bin/openchimera-config-gen; then
+		logger -t openchimera "Config generation failed - refusing to start"
 		return 1
-	}
+	fi
+	logger -t openchimera "Config generation successful"
 
 	# Validate configuration before starting the core
 	logger -t openchimera "Validating configuration..."
