@@ -1,0 +1,10 @@
+=== Verifying no manual-only verification language ===
+
+Search for 'manual confirmation':
+2
+
+Search for 'verify it works':
+2
+
+Result: Both terms appear ONLY in the 'Forbidden Patterns' section as prohibited language. Actual verification steps use exact commands with expected outputs.
+PASS: All verification steps are command/tool executable.

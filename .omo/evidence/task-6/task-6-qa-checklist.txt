@@ -1,0 +1,13 @@
+32:make package/chimera-core/compile V=s
+56:opkg install chimera-core_*.ipk openchimera_*.ipk
+100:| QA-01 | chimera-core SDK compile | `make package/chimera-core/compile V=s` | Exit 0; `chimera-core_*.ipk` produced under `bin/packages/` | `task-13-sdk-build.txt` |
+108:| QA-04 | Install chimera-core | `opkg install chimera-core_*.ipk` | Installed with no dependency errors | `task-14-init-lifecycle.txt` |
+109:| QA-05 | Install openchimera | `opkg install openchimera_*.ipk` | Installed with no dependency errors | `task-14-init-lifecycle.txt` |
+136:| QA-10 | Invalid config fails test | Write `mixed-port: not-a-number` to config; run `/usr/bin/mihomo -t -d /etc/openchimera/run -c config.yaml` | Exit non-zero; error message about invalid config | `task-8-valid-config-test.txt` |
+143:| QA-12 | Start enabled service | `uci set openchimera.main.enabled=1`; `/etc/init.d/openchimera start`; `pgrep -f '/usr/bin/mihomo\|/usr/libexec/chimera'` | Process running; PID captured | `task-14-init-lifecycle.txt` |
+144:| QA-13 | Stop running service | `/etc/init.d/openchimera stop`; `pgrep -f '/usr/bin/mihomo\|/usr/libexec/chimera'` | No process remains | `task-14-init-lifecycle.txt` |
+145:| QA-14 | Restart changes PID | Capture PID; run `/etc/init.d/openchimera restart`; capture PID again | PID changed or process cleanly restarted | `task-14-init-lifecycle.txt` |
+151:| QA-15 | Disabled service does not start | `uci set openchimera.main.enabled=0`; `/etc/init.d/openchimera start`; `pgrep -f '/usr/bin/mihomo\|/usr/libexec/chimera'` | No Chimera process spawned | `task-14-failure-paths.txt` |
+157:| QA-16 | Invalid config prevents daemon start | `uci set openchimera.main.enabled=1`; write invalid config; `/etc/init.d/openchimera start`; `pgrep -f '/usr/bin/mihomo\|/usr/libexec/chimera'` | No process running | `task-14-failure-paths.txt` |
+179:- [ ] QA-04: chimera-core opkg install succeeds
+180:- [ ] QA-05: openchimera opkg install succeeds
