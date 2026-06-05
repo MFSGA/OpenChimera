@@ -104,7 +104,7 @@ ls -la bin/packages/x86_64/openchimera/
 Typical output:
 
 ```
-chimera-core_0.20.2-1_x86_64.ipk
+chimera-core_0.21.1-1_x86_64.ipk
 openchimera_2026.06.06-1_x86_64.ipk
 ```
 

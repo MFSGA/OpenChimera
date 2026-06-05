@@ -122,7 +122,7 @@ https://github.com/MFSGA/Chimera_Client/releases/download/vX.Y.Z/clash_chimera-a
 ```makefile
 PKG_SOURCE:=clash_chimera-x86_64-unknown-linux-musl
 PKG_SOURCE_URL:=https://github.com/MFSGA/Chimera_Client/releases/download/$(PKG_SOURCE_VERSION)
-PKG_HASH:=532166cad0154158d9a23272341acb6a5256bf750ab35454cdb571608ff11df4
+PKG_HASH:=850c949dc0176da3d5b57cb78f2e903cbe8823703c819c402f02ca16dea434d0
 ```
 
 This approach works for x86_64 only because OpenWrt's `PKG_SOURCE` does not
@@ -144,7 +144,7 @@ to set architecture-specific variables:
 # --- Per-architecture artifact selection ---
 # x86_64 (musl) — default
 PKG_SOURCE:=clash_chimera-x86_64-unknown-linux-musl
-PKG_HASH:=532166cad0154158d9a23272341acb6a5256bf750ab35454cdb571608ff11df4
+PKG_HASH:=850c949dc0176da3d5b57cb78f2e903cbe8823703c819c402f02ca16dea434d0
 
 # aarch64 (musl) — enable once upstream artifact is verified
 # ifneq ($(filter aarch64%,$(ARCH)),)
@@ -388,23 +388,23 @@ Add a performance benchmark step if aarch64 is expected to be a primary platform
 
 ## Appendix A: Reference Artifacts
 
-### Current x86_64-musl Reference (v0.20.2)
+### Current x86_64-musl Reference (v0.21.1)
 
 | Property | Value |
 |----------|-------|
 | Artifact | `clash_chimera-x86_64-unknown-linux-musl` |
-| SHA256 | `532166cad0154158d9a23272341acb6a5256bf750ab35454cdb571608ff11df4` |
-| Size | 13.5 MB |
-| URL | `https://github.com/MFSGA/Chimera_Client/releases/download/v0.20.2/clash_chimera-x86_64-unknown-linux-musl` |
+| SHA256 | `850c949dc0176da3d5b57cb78f2e903cbe8823703c819c402f02ca16dea434d0` |
+| Size | 14.8 MB |
+| URL | `https://github.com/MFSGA/Chimera_Client/releases/download/v0.21.1/clash_chimera-x86_64-unknown-linux-musl` |
 
-### Current aarch64-gnu Reference (v0.20.2)
+### Current aarch64-gnu Reference (v0.21.1)
 
 | Property | Value |
 |----------|-------|
 | Artifact | `clash_chimera-aarch64-unknown-linux-gnu` |
-| SHA256 | `cfb73c76ac27caa23dc696e066bf719b7a7655bc0ef6a064afaf213b106d5d36` |
-| Size | 11.7 MB |
-| URL | `https://github.com/MFSGA/Chimera_Client/releases/download/v0.20.2/clash_chimera-aarch64-unknown-linux-gnu` |
+| SHA256 | (to be re-verified when aarch64 is enabled) |
+| Size | (to be re-verified) |
+| URL | `https://github.com/MFSGA/Chimera_Client/releases/download/v0.21.1/clash_chimera-aarch64-unknown-linux-gnu` |
 | **⚠️ gnu-linked** | **Incompatible with OpenWrt musl** — do not use |
 
 ### Target aarch64-musl (when available)

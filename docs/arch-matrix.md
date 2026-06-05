@@ -1,6 +1,6 @@
 # OpenChimera Architecture / Artifact Matrix
 
-> **Pinned Upstream Release**: [`Chimera_Client v0.20.2`](https://github.com/MFSGA/Chimera_Client/releases/tag/v0.20.2)
+> **Pinned Upstream Release**: [`Chimera_Client v0.21.1`](https://github.com/MFSGA/Chimera_Client/releases/tag/v0.21.1)
 >
 > **Policy**: All milestone references use a pinned semver tag. The moving `latest` tag is never used as a stable reference.
 
@@ -63,18 +63,18 @@ OpenChimera will **never** package gnu-linked binaries as OpenWrt-compatible. If
 ## Upstream Release Reference
 
 - **Repository**: [MFSGA/Chimera_Client](https://github.com/MFSGA/Chimera_Client)
-- **Pinned version**: `v0.20.2`
+- **Pinned version**: `v0.21.1`
 - **Version field pattern** (per OpenWrt convention, after `.ref/OpenWrt-nikki/mihomo-meta/Makefile`):
   ```makefile
-  PKG_VERSION:=0.20.2
-  PKG_SOURCE_VERSION:=v0.20.2
+  PKG_VERSION:=0.21.1
+  PKG_SOURCE_VERSION:=v0.21.1
   ```
 - **Artifact naming convention**: `clash_chimera-{rust-target}`
 
 ## Version Pinning Policy
 
 1. Every release of `chimera-core` references a specific pinned `PKG_VERSION` / `PKG_SOURCE_VERSION`.
-2. The `latest` tag is never used — all references are immutable semver tags (`v0.20.2`, etc.).
+2. The `latest` tag is never used — all references are immutable semver tags (`v0.21.1`, etc.).
 3. Version bumps require:
    - New upstream release tag exists
    - Artifact hashes are verified

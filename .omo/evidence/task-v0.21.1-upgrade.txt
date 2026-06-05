@@ -1,0 +1,93 @@
+# v0.21.1 Upgrade Static Verification
+
+**Date**: 2026-06-05T20:11:42Z
+**Source**: <https://github.com/MFSGA/Chimera_Client/releases/tag/v0.21.1>
+**Pinned in**: `chimera-core/Makefile` (PKG_VERSION=0.21.1, PKG_HASH updated)
+
+## Artifact
+
+```
+-rwxr-xr-x 1 si si 15485736 Jun  6 04:08 chimera
+```
+
+## SHA256
+
+```
+850c949dc0176da3d5b57cb78f2e903cbe8823703c819c402f02ca16dea434d0  chimera
+```
+
+## Version
+
+```
+$ ./chimera -V
+clash-rs 0.21.1
+```
+
+## CLI Flags (subset, head)
+
+```
+Usage: chimera [OPTIONS]
+
+Options:
+  -d, --directory <DIRECTORY>
+  -c, --config <FILE>                  [aliases: -f]
+  -t, --test-config
+  -v, --version                        [aliases: -V]
+  -l, --log-file <LOG_FILE>
+  --compatibility <COMPATIBILITY>      [default: true]
+  -h, --help
+```
+
+**Verdict**: Flags `-d`, `-c`, `-t`, `-V`, `-l`, `--compatibility` are unchanged from v0.20.2.
+The `openchimera.init` script and `config_gen.sh` need no changes.
+
+## Configuration Tests
+
+### 1. Default config (openchimera/files/config.yaml.default)
+
+```
+$ ./chimera -t -c test-config.yaml
+configuration file /tmp/opencode/chimera-0.21.1/test-config.yaml test is successful
+Exit: 0
+```
+
+### 2. TUN config (utun device, gvisor stack, table 9000, mixed port 7890)
+
+```
+$ ./chimera -t -c tun-config.yaml
+configuration file /tmp/opencode/chimera-0.21.1/tun-config.yaml test is successful
+Exit: 0
+```
+
+### 3. Invalid config (port=not-a-number)
+
+```
+$ ./chimera -t -c bad-config.yaml
+configuration file /tmp/opencode/chimera-0.21.1/bad-config.yaml test failed: invalid config: could not parse config content: invalid digit found in string
+Exit: 1
+```
+
+## Conclusion
+
+All three tests produce the expected outcomes (success, success, rejection).
+v0.21.1 is **drop-in compatible** with the existing OpenChimera init script, config_gen.sh,
+and UCI schema. No source-level changes are required for this upgrade.
+
+## Upstream Release Notes (v0.21.1)
+
+- Bug fix: add dep for test
+- All v0.21.0 → v0.21.1 changes are additive (shadowsocks outbound, rule providers,
+  TUN improvements). No breaking config-format changes.
+
+## Asset Set (unchanged from v0.20.2)
+
+- `clash_chimera-aarch64-pc-windows-msvc.exe`
+- `clash_chimera-aarch64-unknown-linux-gnu`
+- `clash_chimera-armv7-unknown-linux-gnueabi`
+- `clash_chimera-armv7-unknown-linux-gnueabihf`
+- `clash_chimera-i686-pc-windows-msvc.exe`
+- `clash_chimera-i686-unknown-linux-musl`
+- `clash_chimera-x86_64-pc-windows-msvc.exe`
+- `clash_chimera-x86_64-unknown-linux-gnu`
+- `clash_chimera-x86_64-unknown-linux-musl`  ← **M1 only target**
+- `LICENSE`, `sha256sums.txt`, `version.txt`

@@ -55,7 +55,7 @@ These features are **not** part of milestone 1. They are planned for later miles
 
 ### Version pinning
 
-Every `chimera-core` release references a specific pinned upstream tag (e.g., `v0.20.2`). The moving `latest` tag is never used. This ensures reproducible builds and clear upgrade paths.
+Every `chimera-core` release references a specific pinned upstream tag (e.g., `v0.21.1`). The moving `latest` tag is never used. This ensures reproducible builds and clear upgrade paths.
 
 ## Prerequisites
 
