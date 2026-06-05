@@ -1,0 +1,73 @@
+name: dependabot
+
+on:
+  schedule:
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+jobs:
+  get_current_info:
+    runs-on: ubuntu-latest
+    outputs:
+      pkg_version: ${{ steps.info.outputs.pkg_version }}
+      pkg_source_version: ${{ steps.info.outputs.pkg_source_version }}
+    steps:
+      - id: checkout
+        name: checkout
+        uses: actions/checkout@v6
+        with:
+          path: OpenChimera
+      - id: info
+        name: info
+        run: |
+          echo "pkg_version=$(grep '^PKG_VERSION:=' OpenChimera/chimera-core/Makefile | cut -d '=' -f 2)" >> $GITHUB_OUTPUT
+          echo "pkg_source_version=$(grep '^PKG_SOURCE_VERSION:=' OpenChimera/chimera-core/Makefile | cut -d '=' -f 2)" >> $GITHUB_OUTPUT
+
+  get_latest_info:
+    runs-on: ubuntu-latest
+    outputs:
+      latest_tag: ${{ steps.info.outputs.latest_tag }}
+      latest_version: ${{ steps.info.outputs.latest_version }}
+      checksum: ${{ steps.info.outputs.checksum }}
+    steps:
+      - id: info
+        name: info
+        run: |
+          latest_tag=$(curl -s https://api.github.com/repos/MFSGA/Chimera_Client/releases/latest | grep -oE '"tag_name": "[^"]*"' | head -1 | cut -d '"' -f 4)
+          latest_version=${latest_tag#v}
+          artifact=clash_chimera-x86_64-unknown-linux-musl
+          curl -sL "https://github.com/MFSGA/Chimera_Client/releases/download/${latest_tag}/${artifact}" -o "${artifact}"
+          checksum=$(sha256sum "${artifact}" | cut -d ' ' -f 1)
+          rm -f "${artifact}"
+          echo "latest_tag=$latest_tag" >> $GITHUB_OUTPUT
+          echo "latest_version=$latest_version" >> $GITHUB_OUTPUT
+          echo "checksum=$checksum" >> $GITHUB_OUTPUT
+
+  update:
+    needs:
+      - get_current_info
+      - get_latest_info
+    if: ${{ needs.get_current_info.outputs.pkg_source_version != needs.get_latest_info.outputs.latest_tag }}
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+        name: checkout
+        uses: actions/checkout@v6
+        with:
+          path: OpenChimera
+      - id: update
+        name: update
+        run: |
+          sed -i "s/^PKG_VERSION:=.*/PKG_VERSION:=${{ needs.get_latest_info.outputs.latest_version }}/" OpenChimera/chimera-core/Makefile
+          sed -i "s/^PKG_SOURCE_VERSION:=.*/PKG_SOURCE_VERSION:=${{ needs.get_latest_info.outputs.latest_tag }}/" OpenChimera/chimera-core/Makefile
+          sed -i "s/^PKG_HASH:=.*/PKG_HASH:=${{ needs.get_latest_info.outputs.checksum }}/" OpenChimera/chimera-core/Makefile
+      - id: pr
+        name: pr
+        uses: peter-evans/create-pull-request@v8
+        with:
+          path: OpenChimera
+          branch: dependabot/chimera-core
+          commit-message: "chimera-core: update to ${{ needs.get_latest_info.outputs.latest_tag }}"
+          title: "chimera-core: update to ${{ needs.get_latest_info.outputs.latest_tag }}"
+          body: |
+            [Changelog](https://github.com/MFSGA/Chimera_Client/compare/${{ needs.get_current_info.outputs.pkg_source_version }}...${{ needs.get_latest_info.outputs.latest_tag }})
