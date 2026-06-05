@@ -10,7 +10,7 @@
 #   openchimera-config-gen
 #   WORK_DIR=/tmp/myrun openchimera-config-gen
 #
-# Called from init script: /etc/init.d/openchimica start
+# Called from init script: /etc/init.d/openchimera start
 #   → loads UCI, generates $WORK_DIR/config.yaml, validates with mihomo -t
 
 set -e
