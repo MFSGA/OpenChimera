@@ -1,0 +1,115 @@
+# OpenChimera x86_64 SDK Compilation Commands
+# =============================================
+# Copy-paste ready. Run these in sequence on a Linux host with the
+# OpenWrt x86_64 SDK extracted.
+#
+# Upstream: MFSGA/Chimera_Client v0.20.2
+# PKG_HASH: 532166cad0154158d9a23272341acb6a5256bf750ab35454cdb571608ff11df4
+# Target:   x86_64 (musl) — Milestone 1 only
+# aarch64:  NOT included in milestone 1
+#
+# Prerequisites:
+#   sudo apt install build-essential libncurses-dev zlib1g-dev
+#   # or: sudo dnf install gcc gcc-c++ make ncurses-devel zlib-devel
+#
+# Download SDK from:
+#   https://downloads.openwrt.org/releases/24.10/targets/x86/64/
+
+# ============================================
+# Step 1: Extract SDK
+# ============================================
+# Adjust filename to match your download
+tar -xf openwrt-sdk-x86_64-gcc-13.x_musl.Linux-x86_64.tar.xz
+cd openwrt-sdk-*/
+
+# Verify SDK is functional
+make info | head -5
+
+# ============================================
+# Step 2: Add OpenChimera feed
+# ============================================
+echo "src-git openchimera https://github.com/MFSGA/OpenChimera.git;main" >> "feeds.conf.default"
+
+# Verify feed line was added
+tail -1 feeds.conf.default
+
+# ============================================
+# Step 3: Update and install feeds
+# ============================================
+./scripts/feeds update -a
+
+# Expected: "Update feed 'openchimera' from https://github.com/MFSGA/OpenChimera.git;main ..."
+
+./scripts/feeds install -a
+
+# Expected: packages symlinked into package/feeds/openchimera/
+
+# Verify feed installation
+ls package/feeds/openchimera/
+ls package/feeds/openchimera/chimera-core/Makefile
+ls package/feeds/openchimera/openchimera/Makefile
+
+# ============================================
+# Step 4: Build chimera-core
+# ============================================
+# Downloads prebuilt binary from GitHub, verifies PKG_HASH, produces .ipk
+make package/chimera-core/compile V=s
+
+# Expected exit code: 0
+# Expected final output: "Package chimera-core is compiled"
+echo "Exit code: $?"
+
+# ============================================
+# Step 5: Build openchimera
+# ============================================
+# Depends on mihomo virtual provider from chimera-core
+make package/openchimera/compile V=s
+
+# Expected exit code: 0
+# Expected final output: "Package openchimera is compiled"
+echo "Exit code: $?"
+
+# ============================================
+# Step 6: Verify .ipk output
+# ============================================
+ls -la bin/packages/x86_64/openchimera/
+
+# Expected files:
+#   chimera-core_0.20.2-1_x86_64.ipk
+#   openchimera_2026.06.06-1_x86_64.ipk
+#   Packages.gz
+#   Packages.manifest
+#   Packages.sig
+
+# Optional: inspect .ipk contents
+tar -xzf bin/packages/x86_64/openchimera/chimera-core_0.20.2-1_x86_64.ipk -O ./control.tar.gz | tar -tz
+tar -xzf bin/packages/x86_64/openchimera/openchimera_2026.06.06-1_x86_64.ipk -O ./control.tar.gz | tar -tz
+
+# ============================================
+# Step 7: Clean and rebuild (optional)
+# ============================================
+make package/chimera-core/clean
+make package/openchimera/clean
+
+# Rebuild both (chimera-core first)
+make package/chimera-core/compile V=s
+make package/openchimera/compile V=s
+
+# ============================================
+# Step 8: Manual PKG_HASH verification (outside SDK)
+# ============================================
+# Only needed if the upstream artifact changes
+# wget https://github.com/MFSGA/Chimera_Client/releases/download/v0.20.2/clash_chimera-x86_64-unknown-linux-musl
+# sha256sum clash_chimera-x86_64-unknown-linux-musl
+# Expected: 532166cad0154158d9a23272341acb6a5256bf750ab35454cdb571608ff11df4
+
+# ============================================
+# Build Summary Verification
+# ============================================
+echo "=== Build Summary ==="
+echo "chimera-core .ipk:"
+ls -lh bin/packages/x86_64/openchimera/chimera-core_*.ipk 2>/dev/null || echo "MISSING"
+echo "openchimera .ipk:"
+ls -lh bin/packages/x86_64/openchimera/openchimera_*.ipk 2>/dev/null || echo "MISSING"
+echo "Package count:"
+ls bin/packages/x86_64/openchimera/*.ipk 2>/dev/null | wc -l

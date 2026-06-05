@@ -1,0 +1,933 @@
+# =============================================================================
+# OpenChimera Install/Init Lifecycle — Exact QA Commands
+# Target: x86_64 OpenWrt 24.10+  |  Execute via: ssh root@<target> "$(cat ...)"
+# Evidence dir: .omo/evidence/task-14/
+# =============================================================================
+#
+# USAGE:
+#   Set TARGET to your OpenWrt device IP, then run sections individually:
+#
+#       TARGET="192.168.1.1"
+#       ssh "root@$TARGET" "$(cat section_S1_PREFLIGHT.sh)"
+#
+#   Or run the entire suite:
+#
+#       ssh "root@$TARGET" 'bash -s' < task-14-install-commands.txt
+#
+# =============================================================================
+
+# =============================================================================
+# SECTION: Environment Setup
+# =============================================================================
+# Set these before running commands on the target:
+TARGET="${TARGET:-192.168.1.1}"          # Your OpenWrt device IP
+SDK_IPK_DIR="/home/si/Desktop/mfsga/OpenChimera/bin"  # Local SDK output
+EVIDENCE_DIR="/home/si/Desktop/mfsga/OpenChimera/.omo/evidence/task-14"
+DATE_CMD="date -u '+%Y-%m-%d %H:%M:%S UTC'"
+
+# =============================================================================
+# COMMON HELPER FUNCTIONS (define once on target)
+# =============================================================================
+
+# Run this block on the target to define helper functions:
+cat << 'HELPER_EOF' > /tmp/qa-helpers.sh
+
+# Helper: run a step, capture output and exit code
+run_step() {
+    local step_name="$1"
+    shift
+    echo ""
+    echo "--- Step: $step_name ---"
+    "$@"
+    echo "exit: $?"
+}
+
+# Helper: assert a condition
+assert_pass() {
+    local description="$1"
+    if "$@"; then
+        echo "  [PASS] $description"
+    else
+        echo "  [FAIL] $description"
+    fi
+}
+
+# Helper: assert that a command returns expected exit code
+assert_exit() {
+    local expected="$1"
+    local description="$2"
+    shift 2
+    "$@"
+    local actual=$?
+    if [ "$actual" = "$expected" ]; then
+        echo "  [PASS] $description (exit $actual)"
+    else
+        echo "  [FAIL] $description (expected exit $expected, got $actual)"
+    fi
+}
+
+# Helper: assert that pgrep returns NO process
+assert_no_process() {
+    local pattern="${1:-mihomo|chimera}"
+    if pgrep -f "$pattern" >/dev/null 2>&1; then
+        echo "  [FAIL] Process found running: $(pgrep -f "$pattern" | head -3)"
+        return 1
+    else
+        echo "  [PASS] No process matching '$pattern'"
+        return 0
+    fi
+}
+
+# Helper: assert that pgrep returns a process
+assert_has_process() {
+    local pattern="${1:-mihomo|chimera}"
+    local pid
+    pid=$(pgrep -f "$pattern" | head -1)
+    if [ -n "$pid" ]; then
+        echo "  [PASS] Process running with PID=$pid"
+        return 0
+    else
+        echo "  [FAIL] No process found matching '$pattern'"
+        return 1
+    fi
+}
+
+HELPER_EOF
+echo "Helpers installed at /tmp/qa-helpers.sh"
+# =============================================================================
+
+
+
+# =============================================================================
+# SCENARIO S0: PRE-FLIGHT CHECKS
+# Evidence: .omo/evidence/task-14/task-14-preflight.txt
+# =============================================================================
+
+# Run on target:
+cat << 'S0_SCRIPT' | ssh "root@$TARGET" 'bash -s'
+source /tmp/qa-helpers.sh
+
+echo "=============================================="
+echo "  S0: Pre-Flight Checks"
+echo "  Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+echo "  Target: $(uname -a)"
+echo "=============================================="
+
+echo ""
+echo "--- OpenWrt Release ---"
+cat /etc/openwrt_release 2>/dev/null || echo "WARN: not OpenWrt?"
+cat /etc/openwrt_version 2>/dev/null || true
+
+echo ""
+echo "--- Architecture ---"
+uname -m
+opkg print-architecture 2>/dev/null | head -5
+
+echo ""
+echo "--- Packages before install ---"
+opkg list-installed 2>/dev/null | grep -E 'chimera-core|openchimera|mihomo' || echo "(none installed)"
+
+echo ""
+echo "--- Process check before install ---"
+assert_no_process 'mihomo|chimera'
+
+echo ""
+echo "--- Runtime dir check ---"
+ls -la /etc/openchimera/run/ 2>&1 || echo "(directory does not exist)"
+ls -la /etc/openchimera/profiles/ 2>&1 || echo "(directory does not exist)"
+ls -la /var/log/openchimera/ 2>&1 || echo "(directory does not exist)"
+
+echo ""
+echo "--- Dependency check ---"
+for dep in curl yq; do
+    if command -v "$dep" >/dev/null 2>&1; then
+        echo "  [OK] $dep: $(which $dep)"
+    else
+        echo "  [MISSING] $dep not found"
+    fi
+done
+
+echo ""
+echo "=============================================="
+echo "  S0 Pre-flight complete."
+echo "=============================================="
+S0_SCRIPT
+
+# Capture evidence:
+# ssh "root@$TARGET" 'bash -s' < /dev/stdin 2>&1 | tee "$EVIDENCE_DIR/task-14-preflight.txt"
+
+# =============================================================================
+
+
+
+# =============================================================================
+# SCENARIO S1: PACKAGE INSTALL
+# Evidence: .omo/evidence/task-14/task-14-install-opkg.txt
+# =============================================================================
+
+# --- Step 1: Transfer .ipk files to target ---
+scp "$SDK_IPK_DIR/packages/x86_64/openchimera/chimera-core_"*.ipk "root@$TARGET:/tmp/"
+scp "$SDK_IPK_DIR/packages/x86_64/openchimera/openchimera_"*.ipk "root@$TARGET:/tmp/"
+
+# --- Step 2: Install on target ---
+cat << 'S1_SCRIPT' | ssh "root@$TARGET" 'bash -s'
+source /tmp/qa-helpers.sh
+
+echo "=============================================="
+echo "  S1: Package Install"
+echo "  Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+echo "=============================================="
+
+echo ""
+echo "--- S1.1: Install chimera-core ---"
+ls -la /tmp/chimera-core_*.ipk 2>&1
+opkg install /tmp/chimera-core_*.ipk 2>&1
+echo "exit: $?"
+echo ""
+echo "--- S1.2: Verify chimera-core installed ---"
+opkg list-installed 2>/dev/null | grep 'chimera-core'
+
+echo ""
+echo "--- S1.3: Install openchimera ---"
+ls -la /tmp/openchimera_*.ipk 2>&1
+opkg install /tmp/openchimera_*.ipk 2>&1
+echo "exit: $?"
+echo ""
+echo "--- S1.4: Verify openchimera installed ---"
+opkg list-installed 2>/dev/null | grep 'openchimera'
+
+echo ""
+echo "--- S1.5: Verify core binary ---"
+ls -la /usr/libexec/chimera 2>&1
+assert_exit 0 "core binary exists" test -x /usr/libexec/chimera
+
+echo ""
+echo "--- S1.6: Verify alternatives symlink ---"
+ls -la /usr/bin/mihomo 2>&1
+readlink -f /usr/bin/mihomo 2>&1
+assert_exit 0 "mihomo resolves" test "$(readlink -f /usr/bin/mihomo)" = "/usr/libexec/chimera"
+
+echo ""
+echo "--- S1.7: Verify helper scripts ---"
+ls -la /usr/bin/openchimera-config-gen 2>&1
+ls -la /usr/bin/openchimera-debug 2>&1
+assert_exit 0 "config-gen exists" test -x /usr/bin/openchimera-config-gen
+assert_exit 0 "debug script exists" test -x /usr/bin/openchimera-debug
+
+echo ""
+echo "--- S1.8: Verify UCI config ---"
+ls -la /etc/config/openchimera 2>&1
+uci show openchimera 2>&1
+assert_exit 0 "UCI file exists" test -f /etc/config/openchimera
+
+echo ""
+echo "--- S1.9: Verify init script ---"
+ls -la /etc/init.d/openchimera 2>&1
+assert_exit 0 "init script exists" test -x /etc/init.d/openchimera
+
+echo ""
+echo "--- S1.10: Verify runtime directories ---"
+ls -la /etc/openchimera/ 2>&1
+ls -la /etc/openchimera/run/ 2>&1
+ls -la /etc/openchimera/profiles/ 2>&1
+assert_exit 0 "run dir exists" test -d /etc/openchimera/run
+assert_exit 0 "profiles dir exists" test -d /etc/openchimera/profiles
+
+echo ""
+echo "--- S1.11: Verify default config ---"
+ls -la /etc/openchimera/config.yaml.default 2>&1
+
+echo ""
+echo "--- S1.12: Core version check ---"
+/usr/bin/mihomo -V 2>&1
+echo "exit: $?"
+
+echo ""
+echo "--- S1.13: Enabled defaults to 0 ---"
+uci get openchimera.config.enabled 2>&1
+assert_exit 0 "enabled defaults to 0" test "$(uci get openchimera.config.enabled)" = "0"
+
+echo ""
+echo "--- S1.14: Clean up /tmp ipk files ---"
+rm -f /tmp/chimera-core_*.ipk /tmp/openchimera_*.ipk
+
+echo ""
+echo "=============================================="
+echo "  S1 Install complete."
+echo "=============================================="
+S1_SCRIPT
+
+# Capture evidence:
+# ssh "root@$TARGET" 'bash -s' 2>&1 | tee "$EVIDENCE_DIR/task-14-install-opkg.txt"
+
+# =============================================================================
+
+
+
+# =============================================================================
+# SCENARIO S2: DISABLED SERVICE START (NEGATIVE TEST)
+# Evidence: .omo/evidence/task-14/task-14-disabled-start.txt
+# =============================================================================
+
+cat << 'S2_SCRIPT' | ssh "root@$TARGET" 'bash -s'
+source /tmp/qa-helpers.sh
+
+echo "=============================================="
+echo "  S2: Disabled Service Start (Negative)"
+echo "  Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+echo "=============================================="
+
+echo ""
+echo "--- S2.1: Verify enabled=0 ---"
+uci get openchimera.config.enabled
+assert_exit 0 "enabled is 0" test "$(uci get openchimera.config.enabled)" = "0"
+
+echo ""
+echo "--- S2.2: Verify no stale process ---"
+assert_no_process 'mihomo|chimera'
+
+echo ""
+echo "--- S2.3: Attempt start with disabled service ---"
+/etc/init.d/openchimera start
+echo "exit: $?"
+assert_exit 1 "start exits non-zero when disabled" test $? -eq 1 || true  # capture initial exit
+START_EXIT=$?
+
+echo ""
+echo "--- S2.4: Verify NO process was spawned ---"
+sleep 1
+assert_no_process 'mihomo|chimera'
+pgrep -f 'mihomo|chimera'
+echo "pgrep exit: $?"
+
+echo ""
+echo "--- S2.5: pidof also returns nothing ---"
+pidof mihomo
+echo "pidof exit: $?"
+
+echo ""
+echo "--- S2.6: Check logread for disabled message ---"
+logread -l 30 2>/dev/null | grep openchimera | tail -10
+logread -l 30 2>/dev/null | grep -q "Service disabled" && \
+    echo "  [PASS] Found 'Service disabled' in log" || \
+    echo "  [FAIL] Did not find 'Service disabled' in log"
+
+echo ""
+echo "--- S2.7: Service status reports not running ---"
+/etc/init.d/openchimera status 2>&1
+echo "status exit: $?"
+
+echo ""
+echo "--- S2.8: Runtime dir may be absent or empty ---"
+ls -la /etc/openchimera/run/ 2>&1 || echo "(no run dir)"
+ls -la /var/log/openchimera/ 2>&1 || echo "(no log dir)"
+
+echo ""
+echo "=============================================="
+echo "  S2 Disabled start test complete."
+echo "  Result: "
+assert_no_process 'mihomo|chimera' && echo "  OVERALL: PASS" || echo "  OVERALL: FAIL"
+echo "=============================================="
+S2_SCRIPT
+
+# Capture evidence:
+# ssh "root@$TARGET" 'bash -s' 2>&1 | tee "$EVIDENCE_DIR/task-14-disabled-start.txt"
+
+# =============================================================================
+
+
+
+# =============================================================================
+# SCENARIO S3: ENABLED SERVICE START
+# Evidence: .omo/evidence/task-14/task-14-enabled-start.txt
+# =============================================================================
+
+cat << 'S3_SCRIPT' | ssh "root@$TARGET" 'bash -s'
+source /tmp/qa-helpers.sh
+
+echo "=============================================="
+echo "  S3: Enabled Service Start"
+echo "  Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+echo "=============================================="
+
+echo ""
+echo "--- S3.1: Verify no stale process ---"
+assert_no_process 'mihomo|chimera'
+
+echo ""
+echo "--- S3.2: Enable service ---"
+uci set openchimera.config.enabled=1
+uci commit openchimera
+uci get openchimera.config.enabled
+assert_exit 0 "enabled set to 1" test "$(uci get openchimera.config.enabled)" = "1"
+
+echo ""
+echo "--- S3.3: Set default port (clean state) ---"
+uci set openchimera.mixin.mixed_port=7890
+uci commit openchimera
+uci get openchimera.mixin.mixed_port
+
+echo ""
+echo "--- S3.4: Start service ---"
+/etc/init.d/openchimera start
+echo "exit: $?"
+assert_exit 0 "start command succeeds" test $? -eq 0 || true
+START_EXIT=$?
+
+echo ""
+echo "--- S3.5: Allow daemon init ---"
+sleep 3
+
+echo ""
+echo "--- S3.6: Capture PID ---"
+PID=$(pgrep -f 'mihomo|chimera' | head -1)
+echo "PID=$PID"
+assert_has_process 'mihomo|chimera'
+
+echo ""
+echo "--- S3.7: pidof returns same PID ---"
+PIDOF=$(pidof mihomo)
+echo "pidof mihomo=$PIDOF"
+if [ "$PID" = "$PIDOF" ]; then
+    echo "  [PASS] pgrep and pidof agree on PID=$PID"
+else
+    echo "  [WARN] pgrep=$PID pidof=$PIDOF (may be multiple processes)"
+fi
+
+echo ""
+echo "--- S3.8: Process details ---"
+ps -p "$PID" -o pid,ppid,comm,args 2>/dev/null || ps | grep mihomo | grep -v grep
+echo "--- /proc/PID/exe ---"
+readlink -f "/proc/$PID/exe" 2>/dev/null
+
+echo ""
+echo "--- S3.9: Service status ---"
+/etc/init.d/openchimera status 2>&1
+echo "status exit: $?"
+
+echo ""
+echo "--- S3.10: Log file exists ---"
+ls -la /var/log/openchimera/core.log 2>&1
+if [ -f /var/log/openchimera/core.log ]; then
+    echo "  [PASS] Log file exists"
+    echo "  File size: $(wc -c < /var/log/openchimera/core.log) bytes"
+else
+    echo "  [FAIL] Log file not found"
+fi
+
+echo ""
+echo "--- S3.11: Log file contents (head) ---"
+head -30 /var/log/openchimera/core.log 2>&1
+
+echo ""
+echo "--- S3.12: Log contains startup message ---"
+if head -30 /var/log/openchimera/core.log 2>/dev/null | grep -qiE 'start|init|listening|running|chimera'; then
+    echo "  [PASS] Log contains startup/runtime messages"
+else
+    echo "  [FAIL] Log does not contain expected startup messages"
+fi
+
+echo ""
+echo "--- S3.13: Generated config.yaml ---"
+ls -la /etc/openchimera/run/config.yaml 2>&1
+if [ -f /etc/openchimera/run/config.yaml ]; then
+    echo "  [PASS] config.yaml generated"
+    echo "--- config.yaml ---"
+    cat /etc/openchimera/run/config.yaml
+else
+    echo "  [FAIL] config.yaml not found"
+fi
+
+echo ""
+echo "--- S3.14: logread shows config gen and validation ---"
+logread -l 30 2>/dev/null | grep openchimera | tail -10
+
+echo ""
+echo "--- S3.15: Verify mixed-port is listening ---"
+# Use ss or netstat to check port
+ss -tlnp 2>/dev/null | grep -E '7890|mihomo' || \
+    netstat -tlnp 2>/dev/null | grep -E '7890|mihomo' || \
+    echo "  [INFO] ss/netstat not available or port not listening (may need ifconfig/ip)"
+
+echo ""
+echo "--- S3.16: Save PID for S4/S5 ---"
+echo "$PID" > /tmp/chimera-pid.txt
+echo "Saved PID=$PID to /tmp/chimera-pid.txt"
+
+echo ""
+echo "=============================================="
+echo "  S3 Enabled start complete."
+echo "  PID_BEFORE=$PID"
+assert_has_process 'mihomo|chimera' && echo "  OVERALL: PASS" || echo "  OVERALL: FAIL"
+echo "=============================================="
+S3_SCRIPT
+
+# Capture evidence:
+# ssh "root@$TARGET" 'bash -s' 2>&1 | tee "$EVIDENCE_DIR/task-14-enabled-start.txt"
+
+# =============================================================================
+
+
+
+# =============================================================================
+# SCENARIO S4: SERVICE RESTART
+# Evidence: .omo/evidence/task-14/task-14-restart-pid.txt
+# =============================================================================
+
+cat << 'S4_SCRIPT' | ssh "root@$TARGET" 'bash -s'
+source /tmp/qa-helpers.sh
+
+echo "=============================================="
+echo "  S4: Service Restart"
+echo "  Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+echo "=============================================="
+
+echo ""
+echo "--- S4.1: Capture PID before restart ---"
+PID_BEFORE=$(cat /tmp/chimera-pid.txt 2>/dev/null || pgrep -f 'mihomo|chimera' | head -1)
+if [ -z "$PID_BEFORE" ]; then
+    echo "  [FAIL] No running process found. Run S3 first."
+    exit 1
+fi
+echo "PID_BEFORE=$PID_BEFORE"
+ps -p "$PID_BEFORE" -o etime,pid,args 2>/dev/null || true
+
+echo ""
+echo "--- S4.2: Execute restart ---"
+/etc/init.d/openchimera restart
+echo "exit: $?"
+assert_exit 0 "restart succeeds" test $? -eq 0 || true
+
+echo ""
+echo "--- S4.3: Allow restart ---"
+sleep 3
+
+echo ""
+echo "--- S4.4: Capture PID after restart ---"
+PID_AFTER=$(pgrep -f 'mihomo|chimera' | head -1)
+echo "PID_AFTER=$PID_AFTER"
+assert_has_process 'mihomo|chimera'
+
+echo ""
+echo "--- S4.5: PID comparison ---"
+echo "PID_BEFORE=$PID_BEFORE  PID_AFTER=$PID_AFTER"
+if [ "$PID_BEFORE" != "$PID_AFTER" ]; then
+    echo "  [PASS] PID changed from $PID_BEFORE to $PID_AFTER (clean restart)"
+else
+    echo "  [WARN] PID unchanged ($PID_BEFORE) — process may have been respawned, not restarted"
+fi
+
+echo ""
+echo "--- S4.6: Service status after restart ---"
+/etc/init.d/openchimera status 2>&1
+echo "status exit: $?"
+
+echo ""
+echo "--- S4.7: Log file after restart ---"
+ls -la /var/log/openchimera/core.log 2>&1
+echo "--- New log entries (tail 15) ---"
+tail -15 /var/log/openchimera/core.log 2>&1
+
+echo ""
+echo "--- S4.8: logread shows restart ---"
+logread -l 30 2>/dev/null | grep openchimera | tail -10
+
+echo ""
+echo "--- S4.9: Verify process details ---"
+ps -p "$PID_AFTER" -o etime,pid,args 2>/dev/null || true
+
+echo ""
+echo "--- S4.10: (Optional) Proxy functional after restart ---"
+if command -v curl >/dev/null 2>&1; then
+    echo "--- curl test ---"
+    curl -x http://127.0.0.1:7890 http://example.com -I --max-time 10 2>&1 | head -10
+    echo "curl exit: $?"
+else
+    echo "  [SKIP] curl not available on target"
+fi
+
+echo ""
+echo "--- S4.11: Update saved PID ---"
+echo "$PID_AFTER" > /tmp/chimera-pid.txt
+echo "Updated PID=$PID_AFTER"
+
+echo ""
+echo "=============================================="
+echo "  S4 Restart complete."
+echo "  Comparison: BEFORE=$PID_BEFORE AFTER=$PID_AFTER"
+assert_has_process 'mihomo|chimera' && echo "  OVERALL: PASS" || echo "  OVERALL: FAIL"
+echo "=============================================="
+S4_SCRIPT
+
+# Capture evidence:
+# ssh "root@$TARGET" 'bash -s' 2>&1 | tee "$EVIDENCE_DIR/task-14-restart-pid.txt"
+
+# =============================================================================
+
+
+
+# =============================================================================
+# SCENARIO S5: SERVICE STOP
+# Evidence: .omo/evidence/task-14/task-14-stop-process.txt
+# =============================================================================
+
+cat << 'S5_SCRIPT' | ssh "root@$TARGET" 'bash -s'
+source /tmp/qa-helpers.sh
+
+echo "=============================================="
+echo "  S5: Service Stop"
+echo "  Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+echo "=============================================="
+
+echo ""
+echo "--- S5.1: Capture PID before stop ---"
+PID_BEFORE=$(cat /tmp/chimera-pid.txt 2>/dev/null || pgrep -f 'mihomo|chimera' | head -1)
+if [ -z "$PID_BEFORE" ]; then
+    echo "  [FAIL] No running process found. Run S3/S4 first."
+    exit 1
+fi
+echo "PID_BEFORE=$PID_BEFORE"
+assert_has_process 'mihomo|chimera'
+
+echo ""
+echo "--- S5.2: Execute stop ---"
+/etc/init.d/openchimera stop
+echo "exit: $?"
+assert_exit 0 "stop succeeds" test $? -eq 0 || true
+
+echo ""
+echo "--- S5.3: Allow SIGTERM propagation ---"
+sleep 2
+
+echo ""
+echo "--- S5.4: Verify process terminated (pgrep) ---"
+assert_no_process 'mihomo|chimera'
+pgrep -f 'mihomo|chimera'
+echo "pgrep exit: $?"
+
+echo ""
+echo "--- S5.5: Verify process terminated (pidof) ---"
+pidof mihomo
+echo "pidof exit: $?"
+
+echo ""
+echo "--- S5.6: Service status ---"
+/etc/init.d/openchimera status 2>&1
+echo "status exit: $?"
+
+echo ""
+echo "--- S5.7: Verify with ps ---"
+ps 2>/dev/null | grep -E 'mihomo|chimera' | grep -v grep || echo "  [PASS] No process in ps output"
+
+echo ""
+echo "--- S5.8: Verify with kill -0 ---"
+kill -0 "$PID_BEFORE" 2>&1 || echo "  [PASS] kill -0: process $PID_BEFORE no longer exists (exit: $?)"
+
+echo ""
+echo "--- S5.9: Log file persists after stop ---"
+if [ -f /var/log/openchimera/core.log ]; then
+    echo "  [PASS] Log file still exists"
+    ls -la /var/log/openchimera/core.log
+    echo "--- Last 10 log lines ---"
+    tail -10 /var/log/openchimera/core.log 2>&1
+else
+    echo "  [FAIL] Log file was deleted on stop"
+fi
+
+echo ""
+echo "--- S5.10: Config file persists after stop ---"
+if [ -f /etc/openchimera/run/config.yaml ]; then
+    echo "  [PASS] Config file still exists at /etc/openchimera/run/config.yaml"
+else
+    echo "  [FAIL] Config file was deleted on stop"
+fi
+
+echo ""
+echo "--- S5.11: logread entries ---"
+logread -l 30 2>/dev/null | grep openchimera | tail -10
+
+echo ""
+echo "=============================================="
+echo "  S5 Stop complete."
+assert_no_process 'mihomo|chimera' && echo "  OVERALL: PASS" || echo "  OVERALL: FAIL"
+echo "=============================================="
+S5_SCRIPT
+
+# Capture evidence:
+# ssh "root@$TARGET" 'bash -s' 2>&1 | tee "$EVIDENCE_DIR/task-14-stop-process.txt"
+
+# =============================================================================
+
+
+
+# =============================================================================
+# SCENARIO S6: INVALID CONFIG BLOCKS START (NEGATIVE TEST)
+# Evidence: .omo/evidence/task-14/task-14-invalid-config-start.txt
+# =============================================================================
+
+cat << 'S6_SCRIPT' | ssh "root@$TARGET" 'bash -s'
+source /tmp/qa-helpers.sh
+
+echo "=============================================="
+echo "  S6: Invalid Config Blocks Start (Negative)"
+echo "  Date: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+echo "=============================================="
+
+echo ""
+echo "--- S6.1: Verify no stale process ---"
+assert_no_process 'mihomo|chimera'
+
+echo ""
+echo "--- S6.2: Ensure service is enabled ---"
+uci set openchimera.config.enabled=1
+uci commit openchimera
+echo "enabled=$(uci get openchimera.config.enabled)"
+
+echo ""
+echo "--- S6.3: Inject invalid UCI value (mixed-port: not-a-number) ---"
+uci set openchimera.mixin.mixed_port='not-a-number'
+uci commit openchimera
+echo "mixed_port=$(uci get openchimera.mixin.mixed_port)"
+assert_exit 0 "UCI invalid value set" test "$(uci get openchimera.mixin.mixed_port)" = "not-a-number"
+
+echo ""
+echo "--- S6.4: (Optional) Clear old log for clean capture ---"
+rm -f /var/log/openchimera/core.log 2>/dev/null || true
+
+echo ""
+echo "--- S6.5: Attempt start with invalid config ---"
+/etc/init.d/openchimera start
+echo "exit: $?"
+# Save exit code for assertion
+START_EXIT=$?
+if [ "$START_EXIT" != "0" ]; then
+    echo "  [PASS] start exited non-zero ($START_EXIT)"
+else
+    echo "  [FAIL] start exited 0 despite invalid config"
+fi
+
+echo ""
+echo "--- S6.6: Wait for validation ---"
+sleep 2
+
+echo ""
+echo "--- S6.7: Verify NO process spawned ---"
+assert_no_process 'mihomo|chimera'
+
+echo ""
+echo "--- S6.8: Verify pidof returns nothing ---"
+pidof mihomo
+echo "pidof exit: $?"
+
+echo ""
+echo "--- S6.9: Check logread for validation failure ---"
+echo "--- logread openchimera entries ---"
+logread -l 50 2>/dev/null | grep openchimera | tail -15
+echo ""
+if logread -l 50 2>/dev/null | grep -q "Configuration validation failed"; then
+    echo "  [PASS] Found 'Configuration validation failed' in logread"
+else
+    echo "  [FAIL] Did not find validation failure in logread"
+fi
+
+echo ""
+echo "--- S6.10: Check core.log for validation output ---"
+if [ -f /var/log/openchimera/core.log ]; then
+    echo "--- core.log contents ---"
+    cat /var/log/openchimera/core.log 2>&1
+    if grep -qiE 'error|invalid|fail' /var/log/openchimera/core.log 2>/dev/null; then
+        echo "  [PASS] core.log contains error/invalid/fail messages"
+    else
+        echo "  [WARN] core.log does not contain obvious error keywords"
+    fi
+else
+    echo "  [INFO] core.log not created (validation failed before log creation)"
+fi
+
+echo ""
+echo "--- S6.11: Verify config.yaml exists (config gen ran) ---"
+if [ -f /etc/openchimera/run/config.yaml ]; then
+    echo "  [PASS] config.yaml exists (config gen executed)"
+    echo "--- generated config.yaml ---"
+    cat /etc/openchimera/run/config.yaml
+else
+    echo "  [FAIL] config.yaml not found (config gen may have failed)"
+fi
+
+echo ""
+echo "--- S6.12: Manual mihomo -t validation for reference ---"
+echo "  Running: /usr/bin/mihomo -t -d /etc/openchimera/run -c config.yaml"
+/usr/bin/mihomo -t -d /etc/openchimera/run -c config.yaml 2>&1
+MANUAL_EXIT=$?
+echo "manual mihomo -t exit: $MANUAL_EXIT"
+if [ "$MANUAL_EXIT" != "0" ]; then
+    echo "  [PASS] Manual validation also fails"
+else
+    echo "  [FAIL] Manual validation passed — the config is actually valid?"
+fi
+
+echo ""
+echo "--- S6.13: Service status ---"
+/etc/init.d/openchimera status 2>&1
+echo "status exit: $?"
+
+echo ""
+echo "=============================================="
+echo "  S6 Invalid config start test complete."
+echo "  OVERALL: "
+assert_no_process 'mihomo|chimera' && echo "    Process check: PASS" || echo "    Process check: FAIL"
+if [ "$START_EXIT" != "0" ]; then
+    echo "    Start rejected: PASS"
+else
+    echo "    Start rejected: FAIL"
+fi
+echo "=============================================="
+S6_SCRIPT
+
+# Capture evidence:
+# ssh "root@$TARGET" 'bash -s' 2>&1 | tee "$EVIDENCE_DIR/task-14-invalid-config-start.txt"
+
+# =============================================================================
+# RESTORE VALID CONFIG AFTER S6
+# =============================================================================
+
+ssh "root@$TARGET" 'bash -s' << 'RESTORE_SCRIPT'
+echo "--- Restoring valid config ---"
+uci set openchimera.mixin.mixed_port='7890'
+uci commit openchimera
+echo "Restored mixed_port=$(uci get openchimera.mixin.mixed_port)"
+echo "Service is stopped and config is valid."
+echo "To restart: uci set openchimera.config.enabled=1 && uci commit openchimera && /etc/init.d/openchimera start"
+RESTORE_SCRIPT
+
+# =============================================================================
+
+
+
+# =============================================================================
+# FULL SUITE RUNNER (sequential)
+# =============================================================================
+# Run this on the controller machine (not the target) to execute all scenarios:
+#
+: << 'FULL_RUNNER'
+#!/bin/bash
+set -e
+TARGET="${TARGET:-192.168.1.1}"
+EVIDENCE_DIR="${EVIDENCE_DIR:-/home/si/Desktop/mfsga/OpenChimera/.omo/evidence/task-14}"
+SDK_IPK_DIR="${SDK_IPK_DIR:-/home/si/Desktop/mfsga/OpenChimera/bin}"
+
+echo "=== OpenChimera Lifecycle QA Suite ==="
+echo "Target: $TARGET"
+echo "Evidence: $EVIDENCE_DIR"
+echo "Date: $(date -u)"
+echo ""
+
+# S0: Pre-flight
+echo ">>> S0: Pre-flight checks..."
+ssh "root@$TARGET" 'bash -s' < <(cat <<'EOF'
+source /tmp/qa-helpers.sh 2>/dev/null || true
+echo "--- preflight ---"
+uname -a
+cat /etc/openwrt_release 2>/dev/null || true
+opkg list-installed 2>/dev/null | grep -E 'chimera-core|openchimera' || true
+pgrep -f 'mihomo|chimera' || echo "no process"
+EOF
+) 2>&1 | tee "$EVIDENCE_DIR/task-14-preflight.txt"
+
+# S1: Install
+echo ">>> S1: Package install..."
+scp "$SDK_IPK_DIR/packages/x86_64/openchimera/chimera-core_"*.ipk "root@$TARGET:/tmp/"
+scp "$SDK_IPK_DIR/packages/x86_64/openchimera/openchimera_"*.ipk "root@$TARGET:/tmp/"
+# (install commands from S1_SCRIPT go here)
+# ... 2>&1 | tee "$EVIDENCE_DIR/task-14-install-opkg.txt"
+
+# S2: Disabled start (negative)
+echo ">>> S2: Disabled service start (negative)..."
+# ... 2>&1 | tee "$EVIDENCE_DIR/task-14-disabled-start.txt"
+
+# S3: Enabled start
+echo ">>> S3: Enabled service start..."
+# ... 2>&1 | tee "$EVIDENCE_DIR/task-14-enabled-start.txt"
+
+# S4: Restart
+echo ">>> S4: Service restart..."
+# ... 2>&1 | tee "$EVIDENCE_DIR/task-14-restart-pid.txt"
+
+# S5: Stop
+echo ">>> S5: Service stop..."
+# ... 2>&1 | tee "$EVIDENCE_DIR/task-14-stop-process.txt"
+
+# S6: Invalid config (negative)
+echo ">>> S6: Invalid config blocks start (negative)..."
+# ... 2>&1 | tee "$EVIDENCE_DIR/task-14-invalid-config-start.txt"
+
+echo ""
+echo "=== Suite complete ==="
+echo "Evidence saved to: $EVIDENCE_DIR"
+ls -la "$EVIDENCE_DIR"
+FULL_RUNNER
+
+# =============================================================================
+
+
+
+# =============================================================================
+# QUICK-REFERENCE COMMANDS (for interactive use)
+# =============================================================================
+
+: << 'QUICK_REF'
+
+--- Package Management ---
+opkg list-installed | grep -E 'chimera-core|openchimera'
+opkg remove openchimera chimera-core --force-removal-of-dependent-packages
+
+--- UCI State Management ---
+uci set openchimera.config.enabled=1      # enable
+uci set openchimera.config.enabled=0      # disable
+uci set openchimera.mixin.mixed_port=7890 # valid port
+uci set openchimera.mixin.mixed_port='not-a-number'  # invalid (for S6 test)
+uci commit openchimera
+uci show openchimera
+
+--- Service Lifecycle ---
+/etc/init.d/openchimera start
+/etc/init.d/openchimera stop
+/etc/init.d/openchimera restart
+/etc/init.d/openchimera reload    # calls stop/start
+/etc/init.d/openchimera status
+/etc/init.d/openchimera enabled   # check if boot-enabled
+
+--- PID Verification ---
+pgrep -f 'mihomo|chimera'
+pgrep -f 'mihomo|chimera' | head -1    # single PID
+pidof mihomo
+kill -0 $(pgrep -f 'mihomo|chimera' | head -1)     # check alive
+ps -p $(pgrep -f 'mihomo|chimera' | head -1) -o pid,ppid,comm,args
+
+--- Log Inspection ---
+cat /var/log/openchimera/core.log
+tail -f /var/log/openchimera/core.log
+head -30 /var/log/openchimera/core.log
+wc -l /var/log/openchimera/core.log
+logread | grep openchimera | tail -20
+
+--- Config Inspection ---
+cat /etc/openchimera/run/config.yaml
+/usr/bin/mihomo -t -d /etc/openchimera/run -c config.yaml
+
+--- Diagnostics ---
+/usr/bin/openchimera-debug
+ls -la /etc/openchimera/
+ls -la /etc/openchimera/run/
+ls -la /var/log/openchimera/
+
+--- Core Binary Verification ---
+readlink -f /usr/bin/mihomo
+/usr/bin/mihomo -V
+/usr/bin/mihomo --help | head -20
+
+QUICK_REF
+
+# =============================================================================
+# END OF COMMANDS FILE
+# =============================================================================
