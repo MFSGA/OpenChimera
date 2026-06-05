@@ -1,7 +1,6 @@
 #!/bin/sh /etc/rc.common
 # OpenChimera procd init service
-# Milestone 1 - basic lifecycle placeholder
-# Full implementation in Task 7
+# Launches the Chimera_Client (clash-rs) proxy core via procd
 
 USE_PROCD=1
 
@@ -13,17 +12,61 @@ WORK_DIR=/etc/openchimera/run
 CONFIG_FILE=config.yaml
 LOG_FILE=/var/log/openchimera/core.log
 
-start_service() {
-	# Ensure log directory exists
-	mkdir -p /var/log/openchimera
+boot() {
+	start
+}
 
-	[ -f "$WORK_DIR/$CONFIG_FILE" ] || {
-		logger -t openchimera "config not found: $WORK_DIR/$CONFIG_FILE"
+start_service() {
+	local enabled log_path
+
+	# Load UCI configuration
+	config_load openchimera
+
+	# Check if enabled
+	config_get_bool enabled config enabled 0
+	[ "$enabled" = 1 ] || {
+		logger -t openchimera "Service disabled (openchimera.config.enabled=0)"
 		return 1
 	}
 
+	# Allow log path override from UCI
+	config_get log_path config log_file
+	[ -n "$log_path" ] && LOG_FILE="$log_path"
+
+	# Create runtime and log directories
+	mkdir -p "$WORK_DIR" || {
+		logger -t openchimera "Failed to create runtime directory: $WORK_DIR"
+		return 1
+	}
+	mkdir -p "$(dirname "$LOG_FILE")" || {
+		logger -t openchimera "Failed to create log directory: $(dirname "$LOG_FILE")"
+		return 1
+	}
+
+	# Verify the core binary exists and is executable
+	[ -x "$PROG" ] || {
+		logger -t openchimera "Core binary not found or not executable: $PROG"
+		return 1
+	}
+
+	# Verify config file exists
+	[ -f "$WORK_DIR/$CONFIG_FILE" ] || {
+		logger -t openchimera "Config file not found: $WORK_DIR/$CONFIG_FILE"
+		return 1
+	}
+
+	# Validate configuration before starting the core
+	logger -t openchimera "Validating configuration..."
+	if ! "$PROG" -t -d "$WORK_DIR" -c "$CONFIG_FILE" >> "$LOG_FILE" 2>&1; then
+		logger -t openchimera "Configuration validation failed - refusing to start (see $LOG_FILE for details)"
+		return 1
+	fi
+	logger -t openchimera "Configuration validation passed"
+
+	# Launch the core daemon via procd
 	procd_open_instance
-	procd_set_param command "$PROG" -d "$WORK_DIR" -c "$CONFIG_FILE" --log-file "$LOG_FILE"
+	procd_set_param command "$PROG" --compatibility -d "$WORK_DIR" -c "$CONFIG_FILE" --log-file "$LOG_FILE"
+	procd_set_param file /etc/config/openchimera
 	procd_set_param respawn
 	procd_set_param stdout 1
 	procd_set_param stderr 1
@@ -35,7 +78,9 @@ stop_service() {
 }
 
 reload_service() {
-	restart
+	# Restart fallback — Chimera does not support SIGHUP hot reload
+	stop
+	start
 }
 
 service_triggers() {
