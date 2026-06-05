@@ -64,28 +64,22 @@ Every `chimera-core` release references a specific pinned upstream tag (e.g., `v
 
 ## SDK Build
 
-Build both packages using an OpenWrt SDK:
+Build both packages using an OpenWrt SDK for x86_64.
 
 ```shell
-# Add OpenChimera feed
+# Quick reference — add feed, update, install, compile
 echo "src-git openchimera https://github.com/MFSGA/OpenChimera.git;main" >> "feeds.conf.default"
-
-# Update and install feeds
 ./scripts/feeds update -a
 ./scripts/feeds install -a
-
-# Compile packages
 make package/chimera-core/compile V=s
 make package/openchimera/compile V=s
 ```
 
 The compiled `.ipk` files will be found under `bin/packages/x86_64/openchimera/`.
 
-### Build notes
-
-- `chimera-core` downloads a prebuilt upstream binary during the build. No Rust toolchain is required.
-- The build requires network access to fetch the upstream release artifact.
-- Only `x86_64` OpenWrt SDK targets are supported in milestone 1.
+> **Full step-by-step instructions** — including SDK setup, prerequisites,
+> troubleshooting, and build notes — are in
+> **[docs/sdk-build.md](docs/sdk-build.md)**.
 
 ## Install
 
