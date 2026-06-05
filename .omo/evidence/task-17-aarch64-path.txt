@@ -1,0 +1,6 @@
+== Task 17 Evidence: aarch64 enablement path ==
+- docs/aarch64-enablement.md created: YES (470 lines)
+- 3 tiers documented: FOUND (upstream CI, package Makefile, QA)
+- 16-action checklist: FOUND
+- Risk assessment: FOUND (5 items)
+- No Makefile modifications: CONFIRMED (analysis-only document)

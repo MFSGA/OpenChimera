@@ -1,0 +1,9 @@
+== Task 9 Evidence: Debug/logging/sysupgrade ==
+- debug.sh created: YES (109 lines)
+- Secret redaction: FOUND (sed patterns at lines 50-51, 100)
+- Version check: FOUND (mihomo -V)
+- Process status: FOUND (ps | grep chimera/mihomo)
+- Log file listing: FOUND (ls -la /var/log/openchimera/)
+- No broad /var/log/ persistence: CONFIRMED ABSENT
+- openchimera.upgrade: VERIFIED (contains /etc/config/openchimera, /etc/openchimera/)
+- bash -n syntax check: PASS

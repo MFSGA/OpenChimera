@@ -1,0 +1,9 @@
+== Task 21 Evidence: Final docs ==
+- docs/migration-guide.md created: YES (783 lines)
+- UCI schema mapping: FOUND (Nikki → OpenChimera)
+- Config format differences: FOUND
+- Binary path changes: FOUND
+- TUN config differences: FOUND
+- Removal of deferred features: FOUND
+- 7-step migration procedure: FOUND
+- README documentation index: UPDATED (EN + ZH)

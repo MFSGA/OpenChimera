@@ -1,0 +1,7 @@
+== Task 18 Evidence: LuCI design ==
+- docs/luci-app-design.md created: YES (1026 lines)
+- 4 views designed: FOUND (Overview, Settings, Logs, Config Preview)
+- ucode RPC controllers: FOUND
+- I18N structure: FOUND (EN + zh-cn)
+- Marked as deferred: CONFIRMED
+- No actual LuCI files: CONFIRMED ABSENT

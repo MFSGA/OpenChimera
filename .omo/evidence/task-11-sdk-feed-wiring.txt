@@ -1,0 +1,8 @@
+== Task 11 Evidence: SDK feed wiring ==
+- docs/sdk-build.md created: YES (166 lines)
+- feed.sh created: YES (71 lines)
+- SDK commands documented: FOUND (feeds.conf.default, feeds update/install, make package/*/compile)
+- No hosted feed dependency for M1: CONFIRMED (all instructions reference local SDK)
+- No Nikki URLs in feed.sh: CONFIRMED ABSENT
+- --help flag in feed.sh: FOUND
+- bash -n syntax check: PASS

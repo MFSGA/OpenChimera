@@ -1,0 +1,12 @@
+== Task 7 Evidence: procd init contract ==
+- Config validation before start: FOUND in openchimera.init:59-62
+- Reload = restart (no SIGHUP): FOUND in openchimera.init:80-84
+- No reload_signal HUP: CONFIRMED ABSENT via grep
+- No QUIC_GO_* vars: CONFIRMED ABSENT via grep
+- Disabled check: FOUND in openchimera.init:26-30
+- Runtime dirs created: FOUND in openchimera.init:37-44
+- Binary existence check: FOUND in openchimera.init:47-50
+- Config existence check: FOUND in openchimera.init:53-56
+- procd lifecycle param: FOUND in openchimera.init:67-75
+- Config gen integration: FOUND in openchimera.init:52-58
+- bash -n syntax check: PASS

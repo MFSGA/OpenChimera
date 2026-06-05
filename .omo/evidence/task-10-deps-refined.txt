@@ -1,0 +1,8 @@
+== Task 10 Evidence: Dependency refinement ==
+- chimera-core/Makefile DEPENDS: +ca-bundle +ip-full +kmod-tun
+- openchimera/Makefile DEPENDS: +mihomo +curl +yq +coreutils-base64
+- Dependency rationale comments: FOUND in both Makefiles
+- No kmod-nft-tproxy: CONFIRMED ABSENT via grep
+- No kmod-nft-socket: CONFIRMED ABSENT via grep
+- No kmod-inet-diag: CONFIRMED ABSENT via grep
+- Deferred TProxy modules: CONFIRMED ABSENT via grep

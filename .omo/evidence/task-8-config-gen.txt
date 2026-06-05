@@ -1,0 +1,10 @@
+== Task 8 Evidence: Config generation ==
+- config_gen.sh created: YES (156 lines)
+- config.yaml.default created: YES (34 lines)
+- Reads UCI fields: FOUND (config_get calls for mixin, config, routing)
+- Generates Chimera-compatible YAML: FOUND (mixed-port, socks-port, port, external-controller, secret, log-level, tun.*)
+- Nikki-only fields excluded: CONFIRMED ABSENT from generated YAML (only in comments)
+- TUN block conditional on tun_enabled: FOUND (line 125: if [ "${tun_enabled}" = "1" ])
+- Explicit TUN device/route-table: FOUND (device: nikki, route-table: 81)
+- Config validation with mihomo -t: FOUND (line 147)
+- bash -n syntax check: PASS

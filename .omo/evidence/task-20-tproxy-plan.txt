@@ -1,0 +1,8 @@
+== Task 20 Evidence: TProxy/Redirect plan ==
+- docs/tproxy-redirect-plan.md created: YES (956 lines)
+- Mode comparison (TUN vs TProxy vs Redirect): FOUND
+- Kernel module requirements: FOUND
+- nftables ruleset architecture: FOUND
+- UCI schema additions proposed: FOUND
+- Risk assessment: FOUND (7 items)
+- Marked as deferred: CONFIRMED

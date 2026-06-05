@@ -1,0 +1,7 @@
+== Task 12 Evidence: Integration checks ==
+- docs/integration-verification.md created: YES (259 lines)
+- PROVIDES/ALTERNATIVES chain: VERIFIED (chimera-core PROVIDES:=mihomo, ALTERNATIVES:300:/usr/bin/mihomo:/usr/libexec/chimera)
+- openchimera DEPENDS on +mihomo: VERIFIED
+- Binary path consistency: VERIFIED (all scripts use /usr/bin/mihomo, no direct /usr/libexec/chimera references)
+- Service lifecycle: VERIFIED (init → config_gen → mihomo -t → procd launch)
+- Version check command: VERIFIED (mihomo -V via debug.sh)

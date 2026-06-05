@@ -1,0 +1,9 @@
+== Task 16 Evidence: Feed/install/uninstall scripts ==
+- install.sh created: YES (188 lines)
+- uninstall.sh created: YES (204 lines)
+- No Nikki URLs or keys: CONFIRMED ABSENT
+- Hosted feed clearly marked as deferred: FOUND
+- Local SDK path primary: FOUND
+- --help flags: FOUND
+- --dry-run in uninstall.sh: FOUND
+- bash -n syntax check: PASS
