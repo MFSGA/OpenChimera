@@ -4,7 +4,7 @@ PKG_NAME:=openchimera
 PKG_VERSION:=2026.06.06
 PKG_RELEASE:=1
 
-PKG_LICENSE:=GPL3.0+
+PKG_LICENSE:=AGPL-3.0
 PKG_MAINTAINER:=OpenChimera Contributors
 
 include $(INCLUDE_DIR)/package.mk

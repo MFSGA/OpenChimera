@@ -191,4 +191,4 @@ OpenChimera integrates the `clash-rs` / Chimera_Client core, which implements a 
 
 ## License
 
-[Apache 2.0](LICENSE)
+[GNU Affero General Public License v3.0](LICENSE)

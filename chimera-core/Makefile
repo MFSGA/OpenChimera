@@ -8,8 +8,8 @@ PKG_SOURCE:=clash_chimera-x86_64-unknown-linux-musl
 PKG_SOURCE_URL:=https://github.com/MFSGA/Chimera_Client/releases/download/$(PKG_SOURCE_VERSION)
 PKG_HASH:=532166cad0154158d9a23272341acb6a5256bf750ab35454cdb571608ff11df4
 
-PKG_LICENSE:=GPL3.0+
-PKG_MAINTAINER:=OpenChimera Team
+  PKG_LICENSE:=AGPL-3.0
+  PKG_MAINTAINER:=OpenChimera Team
 
 PKG_BUILD_FLAGS:=no-mips16
 

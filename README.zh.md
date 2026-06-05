@@ -195,4 +195,4 @@ OpenChimera 集成了 `clash-rs` / Chimera_Client 核心，该核心实现了 Cl
 
 ## 许可证
 
-[Apache 2.0](LICENSE)
+[GNU Affero General Public License v3.0](LICENSE)
