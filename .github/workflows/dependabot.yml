@@ -49,6 +49,9 @@ jobs:
       - get_latest_info
     if: ${{ needs.get_current_info.outputs.pkg_source_version != needs.get_latest_info.outputs.latest_tag }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - id: checkout
         name: checkout
