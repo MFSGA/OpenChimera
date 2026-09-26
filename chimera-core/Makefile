@@ -1,12 +1,12 @@
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=chimera-core
-PKG_VERSION:=0.21.1
-PKG_SOURCE_VERSION:=v$(PKG_VERSION)
+PKG_VERSION:=0.26.0
+PKG_SOURCE_VERSION:=v0.26.0
 
 PKG_SOURCE:=clash_chimera-x86_64-unknown-linux-musl
 PKG_SOURCE_URL:=https://github.com/MFSGA/Chimera_Client/releases/download/$(PKG_SOURCE_VERSION)
-PKG_HASH:=850c949dc0176da3d5b57cb78f2e903cbe8823703c819c402f02ca16dea434d0
+PKG_HASH:=a6b15f0afad2e4436906ba9c53c3290e792be83a34bec40e3494686b806a524b
 
   PKG_LICENSE:=AGPL-3.0
   PKG_MAINTAINER:=OpenChimera Team
